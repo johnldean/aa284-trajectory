@@ -4,7 +4,7 @@
 %clear all
 %Inputs are thrust(given from evaluating thrust eqn. at time vector) and
 function deltaV = trajectory_calcs(p_coeffs)%inputpolycoeffs)
-
+p_coeffs;
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
 m_mars = 6.39E23; %mass mars [kg]
@@ -16,7 +16,7 @@ orbit_inject = sqrt(u_mars /(alt_final + r_mars));
 v_final = orbit_inject;
 
 bTimeMax = 100*2; % [s]
-steps = 1000000;
+steps = 10000;
 t = linspace(0,bTimeMax,steps);
 dT = bTimeMax/steps; 
 thrust_ = 10000 * ones(1, length(t));%thrust eq, eval at time %(see graph)/cantwell 283 eqns-revise
@@ -79,7 +79,7 @@ for i = 2: length(t)
         alt_diff_norm = alt_diff;
     end
     alt_diff_norm = alt_diff_norm / alt_diff_lim;
-    FACtor = 5/40; %theta changes by maximum ~1deg
+    FACtor = 50/40; %theta changes by maximum ~1deg
     TV_th_new = TV_th_act + FACtor * alt_diff_norm;
     if TV_th_new < 0%-1
         TV_th_new = 0;%-1;
@@ -132,18 +132,27 @@ for i = 2: length(t)
     end
 end
 
-subplot(311)
+
+subplot(511)
 plot(t(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000) %alt in km
 xlabel('t (s)');
-ylabel('alt (km');
-subplot(312)
+ylabel('alt (km)');
+subplot(512)
 plot(t(1:cutoff_time), theta_vel(1:cutoff_time)) %alt in km
 xlabel('t (s)');
-ylabel('theta vel (km');
-subplot(313)
+ylabel('theta vel (m/s');
+subplot(513)
 plot(theta_vel(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000)
 xlabel('theta vel (m/s)');
-ylabel('alt (km');
+ylabel('alt (km)');
+subplot(514)
+plot(t(1:cutoff_time), r_vel(1:cutoff_time))
+xlabel('t (s)');
+ylabel('r vel (m/s)');
+subplot(515)
+plot(t(1:cutoff_time), TV_th(1:cutoff_time))
+xlabel('t (s)');
+ylabel('TV (rad)');
 %subplot(414)
 %sx = [-1, -1, -1, 1, 1, 1]';% + 2;
 %sx2 = [1, -1, -1, 1, -1, -1, 1]';% + 5;
@@ -163,5 +172,6 @@ ylabel('alt (km');
 %ylim([.5, 9.5]);
 %plot(theta_vel(1:cutoff_time) / orbit_inject, (1 - exp(-5 * theta_vel(1:cutoff_time)/orbit_inject) ));
 delta_v_approx = sum(delta_v) + orbit_inject - max(theta_vel);
+sum(delta_v);
 deltaV = delta_v_approx;
 end
