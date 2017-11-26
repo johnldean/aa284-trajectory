@@ -54,6 +54,7 @@ M = 350 * (1 - .95 * t / bTimeMax);
 TV_th = zeros(1,length(t)); %trust vector angle
 TV_th_init = pi/2; % takeoff at vertical [rad]
 TV_th(1) = TV_th_init;
+cutoff_time = t(end);
 for i = 2: length(t)
     thrust = thrust_(i);
     TV_th_act = TV_th(i-1);
