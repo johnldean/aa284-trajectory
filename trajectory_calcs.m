@@ -3,7 +3,7 @@
 %James, V3, 11-6
 %clear all
 %Inputs are thrust(given from evaluating thrust eqn. at time vector) and
-function deltaV = trajectory_calcs(p_coeffs)%inputpolycoeffs)
+function deltaV = trajectory_calcs(p_coeffs,steps)%inputpolycoeffs)
 p_coeffs;
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
@@ -16,7 +16,6 @@ orbit_inject = sqrt(u_mars /(alt_final + r_mars));
 v_final = orbit_inject;
 
 bTimeMax = 100*2; % [s]
-steps = 10000;
 t = linspace(0,bTimeMax,steps);
 dT = bTimeMax/steps; 
 thrust_ = 10000 * ones(1, length(t));%thrust eq, eval at time %(see graph)/cantwell 283 eqns-revise
@@ -133,7 +132,7 @@ for i = 2: length(t)
     end
 end
 
-
+if 0
 subplot(511)
 plot(t(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000) %alt in km
 xlabel('t (s)');
@@ -154,11 +153,12 @@ subplot(515)
 plot(t(1:cutoff_time), TV_th(1:cutoff_time))
 xlabel('t (s)');
 ylabel('TV (rad)');
+end 
 %subplot(414)
 %sx = [-1, -1, -1, 1, 1, 1]';% + 2;
 %sx2 = [1, -1, -1, 1, -1, -1, 1]';% + 5;
 %sx3 = [1, 0, -1, 0, 0]' + 8;
-%ys = [1, -1, 0, 0, 1, -1]';% + 2;
+%y=s = [1, -1, 0, 0, 1, -1]';% + 2;
 %ys2 = [1, 1, 0, 0, 0, -1, -1]';% + 2;
 %ys3 = [1, 0, 1, 0, -1]' + 2;
 %reps = 10;
