@@ -2,46 +2,71 @@
 minDv_ = [];
 steps = 1e4;
 coeffs = [0.1, 0];
+data = cell(1,9);
 for order = 2:10
     coeffs = [0 , coeffs];
     %coeffs = [-0.0036   -0.0047   -0.0058   -0.0070    0.0934   -0.0034]
-    delta = 0.0005;
-    lr = 1e-3;
     Dv_prev = trajectory_calcs(coeffs,steps);
     grad = traj_gradient(coeffs,delta,steps);
     Dv_ = [];
     coeffs_ = [];
     lr_ = [];
-    while lr > 1e-8
-        coeffs_new = coeffs - grad*lr;
-        Dv_new = trajectory_calcs(coeffs_new,steps);
-        if Dv_new >= Dv_prev
-            lr = lr/2;
-        else
-            lr = lr*1.1;
-            coeffs = coeffs_new;
-            Dv_prev = Dv_new;
-            grad = traj_gradient(coeffs,delta,steps);
+    for i = 0:2
+        lr = 1e-2;
+        delta = 5e-4/(2^i);
+        steps = 1e4*2^i;
+        grad = traj_gradient(coeffs,delta,steps);
+        while lr > 1e-8
+            coeffs_new = coeffs - grad*lr;
+            Dv_new = trajectory_calcs(coeffs_new,steps);
+            if Dv_new >= Dv_prev
+                lr = lr/2;
+            else
+                lr = lr*1.1;
+                coeffs = coeffs_new;
+                Dv_prev = Dv_new;
+                grad = traj_gradient(coeffs,delta,steps);
+            end
+            {lr, order,i}
+            coeffs_ = [coeffs_,coeffs'];
+            Dv_ = [Dv_, Dv_prev];
+            lr_ = [lr_, lr];
         end
-        coeffs;
-
-        {lr, order}
-        coeffs_ = [coeffs_,coeffs'];
-        Dv_ = [Dv_, Dv_prev];
-        lr_ = [lr_, lr];
     end
     order
     Dv_prev
     minDv_ = [minDv_, Dv_prev];
+    data(order-1) = {[lr_ ;Dv_]};
 end
-plot(2:10,minDv_)
 %%
-    subplot(121)
+clf()
+plot(2:10,minDv_)
+xlabel('order')
+ylabel('delta v (m/s)')
+%%
+
+for i = 1:9
+    subplot(9,2,(i-1)*2+1)
+    lr_ = data{i}(1,:);
+    Dv_ = data{i}(2,:);
     plot(Dv_/1000)
     ylabel('Delta V (km/s)')
     xlabel('iteration number')
-    subplot(122)
+    subplot(9,2,(i-1)*2+2)
     semilogy(lr_)
     ylabel('learning rate')
     xlabel('iteration number')
-    
+end    
+
+%%
+step_ = [];
+dv_ = [];
+for i = 3:7
+    step_ = [step_, 10^i];
+    dv_ = [dv_, trajectory_calcs(coeffs,10^i)];
+    i
+end
+clf()
+semilogx(step_,dv_)
+xlabel('number of steps')
+ylabel('delta v (m/s)')

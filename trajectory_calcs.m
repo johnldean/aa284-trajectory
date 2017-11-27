@@ -132,7 +132,7 @@ for i = 2: length(t)
     end
 end
 
-if 0
+if 1
 subplot(511)
 plot(t(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000) %alt in km
 xlabel('t (s)');
