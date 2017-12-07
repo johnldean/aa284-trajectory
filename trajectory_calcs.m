@@ -4,7 +4,7 @@
 %Robbie, V4, 12-3, Drag after cutoff
 %clear all
 %Inputs are thrust(given from evaluating thrust eqn. at time vector) and
-function deltaV = trajectory_calcs_robbie(p_coeffs,steps)%inputpolycoeffs)
+function deltaV = trajectory_calcs(p_coeffs,steps)%inputpolycoeffs)
 p_coeffs;
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
@@ -19,10 +19,14 @@ v_final = orbit_inject;
 TimeMax = 1000;% [s]
 t = linspace(0,TimeMax,steps);
 dT = TimeMax/steps;
-M1_prop = 133.84;
-M1_t = 153.84;
-M2_prop = 60.7;
-M2_t = 70.70;
+M_payl = 61.4;
+M2_prop = 64.7815;
+M2_struc = 8.8338;
+M2_t = M_payl + M2_prop + M2_struc;
+M1_prop = 118.2539;
+M1_struc = 17.6701;
+M1_t = M2_t + M1_prop + M1_struc;
+
 isp1 = 316.41 * u_mars / r_mars^2; %m/s
 isp2 = 316.41 * u_mars / r_mars^2; %m/s
 thrust1 = 9400;
@@ -30,12 +34,12 @@ thrust2 = 1400;
 bTime1 = M1_prop / (thrust1 / isp1);
 bTime2 = M2_prop / (thrust2 / isp2);
 stageTime = 2;
-mass_staging = M1_t - M1_prop;
+mass_staging = M1_struc;
 steps_stage = floor(bTime1 + stageTime) / dT;
 T1 = thrust1 * ones(floor(bTime1 / dT), 1);
 Tstaging = zeros(stageTime / dT, 1);
 T2 = thrust2 * ones(floor((TimeMax - (bTime1 + stageTime)) / dT), 1);
-thrust_ = vertcat(T1, Tstaging, T2)
+thrust_ = vertcat(T1, Tstaging, T2);
 I1 = isp1 * ones(floor(bTime1 / dT), 1);
 Istaging = isp1 * ones(stageTime / dT, 1);
 I2 = isp2 * ones(floor((TimeMax - (bTime1 + stageTime)) / dT), 1);
@@ -65,10 +69,10 @@ theta = zeros(1,length(t));
 
 
 Cd = 2; %limit is 2..see eqn from slides
-A = .1;
+A = pi / 4 * .8^2;
 %M = 350 * ones(1, length(t)); %mass rocket [kg] %losing mass. ADD IN
 M = zeros(TimeMax, 1);
-Minit = 270.4983;
+Minit = M1_t;
 M(1) = Minit;
 %ut = ti
 
@@ -154,6 +158,7 @@ for i = 2: length(t)
     alt_ap = semi_major * ( 1 + norm(eccentricity)) - r_mars;
     delta_v(i) = thrust / M(i - 1) * dT;
     M(i) = M(i - 1) - thrust / isp_(i - 1) * dT;
+    M_curr = M(i);
     if M(i) < M2_t - M2_prop
         M(i) = M2_t - M2_prop;
         %output = 'burnout'
@@ -249,13 +254,13 @@ for i = 2: length(t)
                 end
                 delta_v_toAlt(j-i+1) =  drag_dv; %accel mag * dt = delvmag
             end
-            delta_V_cutToFinAlt
+            delta_V_cutToFinAlt;
             %delta_v_drag = delta_V_final - delta_v_cutoff;
             delV_addBurn = [];
-            mass_start_ = M(i);
+            mass_start = M(i);
             mass_new = mass_start;
             while  sum(delV_addBurn) <  delta_V_cutToFinAlt
-                addBurn(h) = addBurn(h) + 1
+                addBurn(h) = addBurn(h) + 1;
                 delV_addBurn(addBurn(h)) = thrust_(i - 1 + addBurn(h)) / mass_new * dT;
                 mass_new = mass_new - thrust_(i - 1 + addBurn(h)) / isp_(i - 1 + addBurn(h)) * dT;
                 if mass_new < M2_t - M2_prop
@@ -275,7 +280,7 @@ for i = 2: length(t)
     
 end
 
-if 1
+if 0
     subplot(511)
     plot(t(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000) %alt in km
     xlabel('t (s)');
@@ -317,11 +322,11 @@ end
 %plot(theta_vel(1:cutoff_time) / orbit_inject, (1 - exp(-5 * theta_vel(1:cutoff_time)/orbit_inject) ));
 
 
-cutoff_time
-DEL_V_DRAG_COMP = sum(delta_v_addBurn)
-PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100
-orbit_inject - max(theta_vel)
-deltaV = sum(delta_v)+ sum(delta_v_addBurn) + orbit_inject - max(theta_vel)
-mass_new
+cutoff_time;
+DEL_V_DRAG_COMP = sum(delta_v_addBurn);
+PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
+orbit_inject - max(theta_vel);
+deltaV = sum(delta_v)+ sum(delta_v_addBurn) + orbit_inject - max(theta_vel);
+mass_new;
 
 end
