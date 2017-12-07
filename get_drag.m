@@ -2,17 +2,13 @@
 % Robbie, V2, 11-5
 
 function drag = get_drag(h,v,Cd,A)
-
 %Gets the drag force on the rocket
-scaleHeight = 0.00009; % mars []
-p = 0.699 * exp(-scaleHeight * h);
-% if h < 7000
-%     T = -31 - 0.000998*h; % [C]
-% else
-%     T = -23.4 - 0.00222*h;
-% end
-T = -31; %surface temp [C]
-rho = p/(0.1921 * (T + 273.1)); % change to Kelvin
+
+rho0 = .015; %nasa data
+
+coeff = -8.3781 * 10^-5; % linearly extrapolated nasa data for logrho vs h from h = 0 to 10000m 
+
+rho = rho0 * exp(h * coeff);
 
 drag = Cd * rho * A * v^2/2;
 
