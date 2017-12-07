@@ -218,7 +218,7 @@ for i = 2: length(t)
                 v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
                 Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
                 drag_loss(i + j) = Fd_norm / M(i) * dT;
-                drag_dv = Fd_norm / M(j) * dT;
+                drag_dv = Fd_norm / M(i) * dT;
                 if v_mag > 0
                     Drag_r = Fd_norm * r_vel_act / v_mag;
                     Drag_theta = Fd_norm * theta_vel_act / v_mag;
@@ -227,11 +227,11 @@ for i = 2: length(t)
                     Drag_theta = 0;
                 end
                 
-                F_g = M(j) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
+                F_g = M(i) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
                 
                 %accel
-                r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(j);
-                theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(j);
+                r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(i);
+                theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(i);
                 %vel
                 theta_vel_new = theta_vel_act +  theta_accel * dT;
                 r_vel_new = r_vel_act +  r_accel * dT;
@@ -332,6 +332,5 @@ DEL_V_DRAG_COMP = sum(delta_v_addBurn);
 PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
 orbit_inject - max(theta_vel);
 deltaV = sum(delta_v)+ sum(delta_v_addBurn) + orbit_inject - max(theta_vel);
-mass_new;
 
 end
