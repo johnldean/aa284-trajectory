@@ -11,7 +11,7 @@ r_mars = 6779000/2; %radius mars [m]
 m_mars = 6.39E23; %mass mars [kg]
 u_mars = 4.282837E13; %standard gravitational parameter [m^3/s^2]
 
-alt_final = 250000; %final height [m]
+alt_final = 212000; %final height [m]
 orbit_inject = sqrt(u_mars /(alt_final + r_mars));
 
 v_final = orbit_inject;
@@ -69,7 +69,7 @@ theta = zeros(1,length(t));
 
 
 Cd = 2; %limit is 2..see eqn from slides
-A = pi / 4 * .8^2;
+A = pi / 4 * 0.62^2;
 %M = 350 * ones(1, length(t)); %mass rocket [kg] %losing mass. ADD IN
 M = zeros(TimeMax, 1);
 Minit = M1_t;
@@ -214,7 +214,7 @@ for i = 2: length(t)
                 %                 %velocity vector
                 v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
                 Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
-                drag_dv = Fd_norm / M(j) * dT;
+                drag_dv = Fd_norm / M(i) * dT;
                 if v_mag > 0
                     Drag_r = Fd_norm * r_vel_act / v_mag;
                     Drag_theta = Fd_norm * theta_vel_act / v_mag;
@@ -223,11 +223,11 @@ for i = 2: length(t)
                     Drag_theta = 0;
                 end
                 
-                F_g = M(j) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
+                F_g = M(i) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
                 
                 %accel
-                r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(j);
-                theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(j);
+                r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(i);
+                theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(i);
                 %vel
                 theta_vel_new = theta_vel_act +  theta_accel * dT;
                 r_vel_new = r_vel_act +  r_accel * dT;
@@ -327,6 +327,6 @@ DEL_V_DRAG_COMP = sum(delta_v_addBurn);
 PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
 orbit_inject - max(theta_vel);
 deltaV = sum(delta_v)+ sum(delta_v_addBurn) + orbit_inject - max(theta_vel);
-mass_new;
+%mass_new;
 
 end

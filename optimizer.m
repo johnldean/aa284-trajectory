@@ -1,11 +1,11 @@
 %%
 minDv_ = [];
-steps = 1e4;
-coeffs = [0.1, 0];
+delta = 5e-4/(2^i);
+steps = 1e3;
+coeffs = [0.5, 0];
 data = cell(1,9);
 for order = 2:10
     coeffs = [0 , coeffs];
-    %coeffs = [-0.0036   -0.0047   -0.0058   -0.0070    0.0934   -0.0034]
     Dv_prev = trajectory_calcs(coeffs,steps);
     grad = traj_gradient(coeffs,delta,steps);
     Dv_ = [];
