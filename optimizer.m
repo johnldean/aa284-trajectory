@@ -1,32 +1,40 @@
 %%
 minDv_ = [];
-delta = 5e-4/(2^i);
-steps = 1e3;
-coeffs = [0.5, 0];
+delta = 5e-4;%/(2^i);
+steps = 5e4;
+coeffs = [.5];
 data = cell(1,9);
-for order = 2:10
+
+for order = 2:5%10
     coeffs = [0 , coeffs];
     Dv_prev = trajectory_calcs(coeffs,steps);
     grad = traj_gradient(coeffs,delta,steps);
     Dv_ = [];
     coeffs_ = [];
     lr_ = [];
-    for i = 0:2
-        lr = 1e-2;
+    for i = 0:0
+        lr = 1e-0;
         delta = 5e-4/(2^i);
         steps = 1e4*2^i;
         grad = traj_gradient(coeffs,delta,steps);
+        %aaa = bbb
         while lr > 1e-8
             coeffs_new = coeffs - grad*lr;
             Dv_new = trajectory_calcs(coeffs_new,steps);
+            %if Dv_prev - Dv_new < .0001 && Dv_new < Dv_prev
+            %    break;
+            %end
             if Dv_new >= Dv_prev
-                lr = lr/2;
+                %lr = lr*1.1;
+                lr = lr / 1.1;
             else
-                lr = lr*1.1;
+                %lr = lr/2;
+                lr = lr * 1.5;
                 coeffs = coeffs_new;
                 Dv_prev = Dv_new;
                 grad = traj_gradient(coeffs,delta,steps);
             end
+            lr
             {lr, order,i}
             coeffs_ = [coeffs_,coeffs'];
             Dv_ = [Dv_, Dv_prev];
@@ -34,6 +42,7 @@ for order = 2:10
         end
     end
     order
+    coeffs
     Dv_prev
     minDv_ = [minDv_, Dv_prev];
     data(order-1) = {[lr_ ;Dv_]};

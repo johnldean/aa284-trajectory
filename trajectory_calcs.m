@@ -7,7 +7,7 @@
 %maxq = 4.4418 kPa
 function deltaV = trajectory_calcs(p_coeffs,steps)%inputpolycoeffs)
 steps;
-p_coeffs
+p_coeffs;
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
 m_mars = 6.39E23; %mass mars [kg]
@@ -16,7 +16,7 @@ u_mars = 4.282837E13; %standard gravitational parameter [m^3/s^2]
 alt_final = 210000; %final height [m]
 orbit_inject = sqrt(u_mars /(alt_final + r_mars));
 
-v_final = orbit_inject
+v_final = orbit_inject;
 
 TimeMax = 1000;% [s]
 t = linspace(0,TimeMax,steps);
@@ -124,12 +124,12 @@ for i = 2: length(t)
     inv_TV_new_norm = (polyval(p_coeffs, t_norm));
     TV_th_new = pi / 2 * (1 - inv_TV_new_norm);
     %TV_th_new = veh_angle + FACtor * alt_diff_norm^5;% * dT
-    %if TV_th_new < 0
-    %    TV_th_new = 0;
-    %end
-    %if TV_th_new > pi/2
-    %    TV_th_new = pi/2;
-    %end
+    if TV_th_new < 0
+        TV_th_new = 0;
+    end
+    if TV_th_new > pi/2
+        TV_th_new = pi/2;
+    end
     %velocity vector
     v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
     Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
@@ -158,10 +158,11 @@ for i = 2: length(t)
     
     r_new = r_act + dT * r_vel_act + r_accel * dT^2 / 2;
     theta_new = theta(i-1) + theta_vel_act / r_act * dT + theta_accel /2 * dT^2 / r_act;
-    r_(i) = r_new;
+    
     theta(i) = theta_new;
     TV_th(i) = TV_th_new;
     del_theta = -atan(theta_vel_new * dT / r_act);
+    r_(i) = r_new;
     %del_theta = pi / 3;
     %r_vel_rotate = r_vel_new * cos(del_theta) + theta_vel_new * sin(del_theta);
     %theta_vel_rotate = -r_vel_new * sin(del_theta) + theta_vel_new * cos(del_theta);
@@ -190,7 +191,7 @@ for i = 2: length(t)
         %output = 'burnout'
     end
     if i == steps_stage + 1
-        output = 'staging'
+        output = 'staging';
         hehehe = sum(delta_v);
         M(i) = M2_t;
     end
@@ -305,8 +306,8 @@ if 1
     drawnow()
 end
 
-drag_loss_t = sum(drag_loss);
-grav_loss_t = sum(grav_loss);
+drag_loss_t = sum(drag_loss)
+grav_loss_t = sum(grav_loss)
 TVC_loss_t = sum(TVC_loss);
 TVC_loss;
 cutoff_time;
@@ -314,8 +315,8 @@ DEL_V_DRAG_COMP = sum(delta_v_addBurn);
 PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
 orbit_inject;
 theta_vel(j);
-deltaV = sum(delta_v)+ sum(delta_v_addBurn) - sum(delta_v_addBurn)+ orbit_inject - theta_vel(j)
-del_v_t = sum(delta_v)
+deltaV = sum(delta_v)+ sum(delta_v_addBurn)+ orbit_inject - theta_vel(j)
+del_v_t = sum(delta_v);
 sum(delta_v_addBurn);
-p_coeffs
+p_coeffs;
 end
