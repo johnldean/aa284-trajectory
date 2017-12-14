@@ -7,7 +7,9 @@ data = cell(1,9);
 
 for order = 2:5%10
     coeffs = [0 , coeffs];
+    %coeffs = [0   -0.7073   -1.2939    1.7574    0.5000]
     Dv_prev = trajectory_calcs(coeffs,steps);
+    %aaa = bbb
     grad = traj_gradient(coeffs,delta,steps);
     Dv_ = [];
     coeffs_ = [];

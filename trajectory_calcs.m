@@ -53,9 +53,13 @@ isp_ = vertcat(I1, Istaging, I2);
 
 %thrust_ = 9400 * ones(1, length(t));%thrust eq, eval at time %(see graph)/cantwell 283 eqns-revise
 
+mars_rot = 241.17; %m/s
+deg2rad = 2 * pi / 360;
+i_init = 30;
+v_rot = mars_rot * cos(deg2rad * i_init);
 %inital conditions
 r_vel_init = 0;
-theta_vel_init = 0;
+theta_vel_init = v_rot;
 
 %pre-allocate
 
@@ -131,7 +135,8 @@ for i = 2: length(t)
         TV_th_new = pi/2;
     end
     %velocity vector
-    v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
+    v_mag = sqrt(( theta_vel_act - v_rot)^2 + r_vel_act^2);  %burn happens at about same latitude as launch
+    %delta theta ~.06radians
     Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
     if v_mag > 0
         Drag_r = Fd_norm * r_vel_act / v_mag;
@@ -316,6 +321,7 @@ PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
 orbit_inject;
 theta_vel(j);
 deltaV = sum(delta_v)+ sum(delta_v_addBurn)+ orbit_inject - theta_vel(j)
+orbit_inject - theta_vel(j)
 del_v_t = sum(delta_v);
 sum(delta_v_addBurn);
 p_coeffs;
