@@ -4,17 +4,19 @@
 %Robbie, V4, 12-3, Drag after cutoff
 %clear all
 %Inputs are thrust(given from evaluating thrust eqn. at time vector) and
+%maxq = 4.4418 kPa
 function deltaV = trajectory_calcs(p_coeffs,steps)%inputpolycoeffs)
-p_coeffs;
+steps;
+p_coeffs
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
 m_mars = 6.39E23; %mass mars [kg]
 u_mars = 4.282837E13; %standard gravitational parameter [m^3/s^2]
 
-alt_final = 250000; %final height [m]
+alt_final = 210000; %final height [m]
 orbit_inject = sqrt(u_mars /(alt_final + r_mars));
 
-v_final = orbit_inject;
+v_final = orbit_inject
 
 TimeMax = 1000;% [s]
 t = linspace(0,TimeMax,steps);
@@ -27,22 +29,26 @@ M1_prop = 118.2539;
 M1_struc = 17.6701;
 M1_t = M2_t + M1_prop + M1_struc;
 
-isp1 = 316.41 * u_mars / r_mars^2; %m/s
-isp2 = 316.41 * u_mars / r_mars^2; %m/s
+isp1 = 316.41 * 9.81;%* u_mars / r_mars^2; %m/s
+isp2 = 316.41 * 9.81;%* u_mars / r_mars^2; %m/s
 thrust1 = 9400;
 thrust2 = 1400;
 bTime1 = M1_prop / (thrust1 / isp1);
+bSteps1 = floor(bTime1 / dT);
 bTime2 = M2_prop / (thrust2 / isp2);
+bSteps2 = floor(bTime2 / dT);
+timeSteps = floor(TimeMax / dT);
 stageTime = 2;
-mass_staging = M1_struc;
-steps_stage = floor(bTime1 + stageTime) / dT;
-T1 = thrust1 * ones(floor(bTime1 / dT), 1);
-Tstaging = zeros(stageTime / dT, 1);
-T2 = thrust2 * ones(floor((TimeMax - (bTime1 + stageTime)) / dT), 1);
+stageSteps = floor(stageTime / dT);
+
+steps_stage = bSteps1 + stageSteps;
+T1 = thrust1 * ones(bSteps1, 1);
+Tstaging = zeros(stageSteps, 1);
+T2 = thrust2 * ones(timeSteps - (bSteps1 + stageSteps), 1);
 thrust_ = vertcat(T1, Tstaging, T2);
-I1 = isp1 * ones(floor(bTime1 / dT), 1);
-Istaging = isp1 * ones(stageTime / dT, 1);
-I2 = isp2 * ones(floor((TimeMax - (bTime1 + stageTime)) / dT), 1);
+I1 = isp1 * ones(bSteps1, 1);
+Istaging = isp1 * ones(stageSteps, 1);
+I2 = isp2 * ones(timeSteps - (bSteps1 + stageSteps), 1);
 isp_ = vertcat(I1, Istaging, I2);
 
 %thrust_ = 9400 * ones(1, length(t));%thrust eq, eval at time %(see graph)/cantwell 283 eqns-revise
@@ -69,7 +75,7 @@ theta = zeros(1,length(t));
 
 
 Cd = 2; %limit is 2..see eqn from slides
-A = pi / 4 * .8^2;
+A = pi / 4 * .64^2;
 %M = 350 * ones(1, length(t)); %mass rocket [kg] %losing mass. ADD IN
 M = zeros(TimeMax, 1);
 Minit = M1_t;
@@ -86,41 +92,44 @@ TV_th(1) = TV_th_init;
 cutoff_time = t(end);
 drag_loss = zeros(TimeMax, 1);
 grav_loss = zeros(TimeMax, 1);
+TVC_loss = zeros(TimeMax, 1);
 for i = 2: length(t)
+    %i
     thrust = thrust_(i - 1);
-    TV_th_act = TV_th(i-1);
+%     M(i) = M(i - 1) - thrust / isp_(i - 1) * dT;
+%     M_curr = M(i);
+%     if M(i) < M2_t - M2_prop
+%         M(i) = M2_t - M2_prop;
+%         %output = 'burnout'
+%     end
+%     if i == steps_stage + 1
+%         output = 'staging'
+%         hehehe = sum(delta_v);
+%         M(i) = M2_t;
+%     end
+    %TV_th_act = TV_th(i-1);
     r_act = r_(i-1);
     alt_act = r_act - r_mars;  %from polynomial..what we want
     theta_vel_act = theta_vel(i-1);
-    theta_vel_norm = theta_vel_act / orbit_inject;
     r_vel_act = r_vel(i-1);
-    alt_targ_norm = polyval(p_coeffs,theta_vel_norm); % in time this will be polyval of function at the v_theta value
-    %alt_targ_norm = (1 - exp(-5 * theta_vel_norm));
-    alt_targ = alt_targ_norm * alt_final;
-    
-    %set lmits of 90 and 0..quadrant so don;t correct over 90
-    %factor needs to be more than a first order controller..take into
-    %account the slope of last correction
-    alt_diff_lim = 1000;
-    alt_diff = alt_targ - alt_act;
-    if alt_diff > alt_diff_lim
-        alt_diff_norm = alt_diff_lim; % if alt. diff is above the limit, set to the limit
-    elseif alt_diff < -alt_diff_lim
-        alt_diff_norm = -alt_diff_lim;
+    %alt_targ_norm = polyval(p_coeffs,theta_vel_norm); % in time this will be polyval of function at the v_theta value
+
+    if theta_vel_act ~= 0
+        veh_angle = atan(r_vel_act / theta_vel_act);
     else
-        alt_diff_norm = alt_diff;
+        veh_angle = pi/2;
     end
-    alt_diff_norm = alt_diff_norm / alt_diff_lim;
-    FACtor = 50/40; %theta changes by maximum ~1deg
-    TV_th_new = TV_th_act + FACtor * alt_diff_norm;
-    if TV_th_new < 0%-1
-        TV_th_new = 0;%-1;
-    end
-    if TV_th_new > 1.57%2.57
-        TV_th_new = 1.57;%2.57;
-    end
-    
-    %d = (r^2 + r_prev^2 - 2*r*r_prev*cos(th-th_prev))^.5;   %distance between points
+    %t_curr = i * dT;
+    t_norm = i / (bSteps1 + bSteps2 + stageSteps);
+    inv_TV_new_norm = (polyval(p_coeffs, t_norm));
+    TV_th_new = pi / 2 * (1 - inv_TV_new_norm);
+    %TV_th_new = veh_angle + FACtor * alt_diff_norm^5;% * dT
+    %if TV_th_new < 0
+    %    TV_th_new = 0;
+    %end
+    %if TV_th_new > pi/2
+    %    TV_th_new = pi/2;
+    %end
     %velocity vector
     v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
     Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
@@ -131,12 +140,19 @@ for i = 2: length(t)
         Drag_r = 0;
         Drag_theta = 0;
     end
-    
-    F_g = M(i - 1) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
-    r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(i - 1);
-    theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(i - 1);
-    grav_loss(i) = F_g / M(i - 1) * dT;
-    drag_loss(i) = Fd_norm / M(i - 1) * dT;
+    TVC_angle = TV_th_new - veh_angle;
+    TVC_loss(i) = thrust * sin(abs(TVC_angle)) * dT / M(i - 1);
+    %if thrust < 1500
+        %TV_th_new = 1*veh_angle;
+    %end
+    F_g = M(i - 1) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u * m/r^2
+    r_accel = (thrust * sin(TV_th_new) - Drag_r - F_g)/M(i - 1); %%%
+    theta_accel = (thrust * cos(TV_th_new) - Drag_theta)/M(i - 1); %%%
+    grav_loss(i) = F_g / M(i - 1) * dT * sin(TV_th_new); %%%
+    if thrust == 0
+        grav_loss(i) = 0;
+    end
+    drag_loss(i) = Fd_norm / M(i - 1) * dT; %%%
     theta_vel_new = theta_vel_act +  theta_accel * dT;
     r_vel_new = r_vel_act +  r_accel * dT;
     
@@ -145,11 +161,18 @@ for i = 2: length(t)
     r_(i) = r_new;
     theta(i) = theta_new;
     TV_th(i) = TV_th_new;
-    %del_theta = theta_vel_new / r_act * dT;
-    %del_theta = theta_vel_new / r_act * dT
-    del_theta = atan(theta_vel_new * dT / r_act);
-    r_vel_rotate = r_vel_new * cos(del_theta) + theta_vel_new * sin(del_theta);
-    theta_vel_rotate = -r_vel_new * sin(del_theta) + theta_vel_new * cos(del_theta);
+    del_theta = -atan(theta_vel_new * dT / r_act);
+    %del_theta = pi / 3;
+    %r_vel_rotate = r_vel_new * cos(del_theta) + theta_vel_new * sin(del_theta);
+    %theta_vel_rotate = -r_vel_new * sin(del_theta) + theta_vel_new * cos(del_theta);
+    point1 = [r_new, 0];
+    point2 = [r_new + r_vel_new, theta_vel_new];
+    rotation_mat = [cos(del_theta), sin(del_theta); -sin(del_theta), cos(del_theta)];
+    point1_rot = point1 * rotation_mat;
+    point2_rot = point2 * rotation_mat;
+    rot_vel = point2_rot - point1_rot;
+    r_vel_rotate = rot_vel(1);
+    theta_vel_rotate = rot_vel(2);
     theta_vel(i) = theta_vel_rotate;
     r_vel(i) = r_vel_rotate;
     total_v = sqrt(r_vel_rotate^2 + theta_vel_rotate^2);
@@ -167,54 +190,29 @@ for i = 2: length(t)
         %output = 'burnout'
     end
     if i == steps_stage + 1
+        output = 'staging'
+        hehehe = sum(delta_v);
         M(i) = M2_t;
     end
     res = 2;
     addBurn = zeros(1,res);%additional burn after cutoff to account for drag loss
     delta_v_addBurn = [];
+    j = i;
     if alt_ap > alt_final % this is not accounting for drag after cutoff
+        %sum(delta_v)
+        note = 'arrived';
+        sum(delta_v);
         for h = 1:res
             cutoff_time = i + sum(addBurn);
             %delta_v_cutoff = sum(delta_v) + sum(delta_v_addBurn)
             delta_v_toAlt = [];
             delta_V_cutToFinAlt = 0;
-            
-            for j = cutoff_time:length(t)
+            for j = cutoff_time + 1:length(t)
                 thrust = 0;
-                % TV_th_act = TV_th(j-1);
                 r_act = r_(j-1);
                 alt_act = r_act - r_mars;  %from polynomial..what we want
                 theta_vel_act = theta_vel(j-1);
-                %                 theta_vel_norm = theta_vel_act / orbit_inject;
                 r_vel_act = r_vel(j-1);
-                %                 alt_targ_norm = polyval(p_coeffs,theta_vel_norm); % in time this will be polyval of function at the v_theta value
-                %                 %alt_targ_norm = (1 - exp(-5 * theta_vel_norm));
-                %                 alt_targ = alt_targ_norm * alt_final;
-                
-                %                 %set lmits of 90 and 0..quadrant so don;t correct over 90
-                %                 %factor needs to be more than a first order controller..take into
-                %                 %account the slope of last correction
-                %                 alt_diff_lim = 1000;
-                %                 alt_diff = alt_targ - alt_act;
-                %                 if alt_diff > alt_diff_lim
-                %                     alt_diff_norm = alt_diff_lim; % if alt. diff is above the limit, set to the limit
-                %                 elseif alt_diff < -alt_diff_lim
-                %                     alt_diff_norm = -alt_diff_lim;
-                %                 else
-                %                     alt_diff_norm = alt_diff;
-                %                 end
-                %                 alt_diff_norm = alt_diff_norm / alt_diff_lim;
-                %                 FACtor = 50/40; %theta changes by maximum ~1deg
-                %                 TV_th_new = TV_th_act + FACtor * alt_diff_norm;
-                %                 if TV_th_new < 0%-1
-                %                     TV_th_new = 0;%-1;
-                %                 end
-                %                 if TV_th_new > 1.57%2.57
-                %                     TV_th_new = 1.57;%2.57;
-                %                 end
-                %
-                %                 %d = (r^2 + r_prev^2 - 2*r*r_prev*cos(th-th_prev))^.5;   %distance between points
-                %                 %velocity vector
                 v_mag = sqrt(theta_vel_act^2 + r_vel_act^2);                                     %altitude
                 Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
                 drag_loss(i + j) = Fd_norm / M(i) * dT;
@@ -226,7 +224,6 @@ for i = 2: length(t)
                     Drag_r = 0;
                     Drag_theta = 0;
                 end
-                
                 F_g = M(i) * u_mars/r_act^2;     %gravity..a;lways r-dir; F = ma = GMm/r^2 => F = u/r^2
                 
                 %accel
@@ -253,6 +250,7 @@ for i = 2: length(t)
                 theta_vel(j) = theta_vel_rotate;
                 r_vel(j) = r_vel_rotate;
                 if  r_vel_new < 0
+                    r_new;
                     delta_V_cutToFinAlt = sum(delta_v_toAlt);
                     break;
                 end
@@ -274,63 +272,50 @@ for i = 2: length(t)
             
             delta_v_addBurn(h) = sum(delV_addBurn);
         end
-        
-        
+
         break;
     end
-    
-    
-    
-    
+
 end
 
-if 0
+if 1
+    cut = (j);
     subplot(511)
-    plot(t(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000) %alt in km
+    length(t);
+    length(r_);
+    plot(t(1:cut), (r_(1:cut) - r_mars)/1000) %alt in km
     xlabel('t (s)');
     ylabel('alt (km)');
     subplot(512)
-    plot(t(1:cutoff_time), theta_vel(1:cutoff_time)) %alt in km
+    plot(t(1:cut), theta_vel(1:cut)) %alt in km
     xlabel('t (s)');
     ylabel('theta vel (m/s');
     subplot(513)
-    plot(theta_vel(1:cutoff_time), (r_(1:cutoff_time) - r_mars)/1000)
+    plot(theta_vel(1:cut), (r_(1:cut) - r_mars)/1000)
     xlabel('theta vel (m/s)');
     ylabel('alt (km)');
     subplot(514)
-    plot(t(1:cutoff_time), r_vel(1:cutoff_time))
+    plot(t(1:cut), r_vel(1:cut))
     xlabel('t (s)');
     ylabel('r vel (m/s)');
     subplot(515)
-    plot(t(1:cutoff_time), TV_th(1:cutoff_time))
+    plot(t(1:cut), TV_th(1:cut))
     xlabel('t (s)');
     ylabel('TV (rad)');
+    drawnow()
 end
-%subplot(414)
-%sx = [-1, -1, -1, 1, 1, 1]';% + 2;
-%sx2 = [1, -1, -1, 1, -1, -1, 1]';% + 5;
-%sx3 = [1, 0, -1, 0, 0]' + 8;
-%y=s = [1, -1, 0, 0, 1, -1]';% + 2;
-%ys2 = [1, 1, 0, 0, 0, -1, -1]';% + 2;
-%ys3 = [1, 0, 1, 0, -1]' + 2;
-%reps = 10;
-%for i = 1:reps
-%    plot(sx + 2 + 8 * (i-1), ys + 5, 'DisplayName', 'H');
-%    hold on;
-%    plot(sx2 + 6 + 8 * (i-1), ys2 + 5, 'DisplayName', 'E');
-%    hold on;
-%end
-%legend('show');
-%xlim([.5 .5 + 8 * reps])
-%ylim([.5, 9.5]);
-%plot(theta_vel(1:cutoff_time) / orbit_inject, (1 - exp(-5 * theta_vel(1:cutoff_time)/orbit_inject) ));
 
-drag_loss_t = sum(drag_loss)
-grav_loss_t = sum(grav_loss)
+drag_loss_t = sum(drag_loss);
+grav_loss_t = sum(grav_loss);
+TVC_loss_t = sum(TVC_loss);
+TVC_loss;
 cutoff_time;
 DEL_V_DRAG_COMP = sum(delta_v_addBurn);
 PERC_Del_V = DEL_V_DRAG_COMP/sum(delta_v) * 100;
-orbit_inject - max(theta_vel);
-deltaV = sum(delta_v)+ sum(delta_v_addBurn) + orbit_inject - max(theta_vel);
-
+orbit_inject;
+theta_vel(j);
+deltaV = sum(delta_v)+ sum(delta_v_addBurn) - sum(delta_v_addBurn)+ orbit_inject - theta_vel(j)
+del_v_t = sum(delta_v)
+sum(delta_v_addBurn);
+p_coeffs
 end
