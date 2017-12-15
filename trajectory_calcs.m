@@ -7,7 +7,7 @@
 %maxq = 4.4418 kPa
 function deltaV = trajectory_calcs(p_coeffs,steps)%inputpolycoeffs)
 steps;
-p_coeffs;
+p_coeffs
 % Mars characteristics
 r_mars = 6779000/2; %radius mars [m]
 m_mars = 6.39E23; %mass mars [kg]
@@ -135,12 +135,14 @@ for i = 2: length(t)
         TV_th_new = pi/2;
     end
     %velocity vector
-    v_mag = sqrt(( theta_vel_act - v_rot)^2 + r_vel_act^2);  %burn happens at about same latitude as launch
+    %v_mag = sqrt(( theta_vel_act - v_rot * r_act / r_mars)^2 + r_vel_act^2);  %burn happens at about same latitude as launch
+    v_mag = sqrt(( theta_vel_act - v_rot)^2 + r_vel_act^2);
     %delta theta ~.06radians
     Fd_norm = get_drag(alt_act,norm(v_mag),Cd,A); %drag
     if v_mag > 0
         Drag_r = Fd_norm * r_vel_act / v_mag;
-        Drag_theta = Fd_norm * theta_vel_act / v_mag;
+        %Drag_theta = Fd_norm * (theta_vel_act - v_rot * r_act / r_mars) / v_mag;
+        Drag_theta = Fd_norm * (theta_vel_act - v_rot) / v_mag;
     else
         Drag_r = 0;
         Drag_theta = 0;
